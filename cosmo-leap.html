@@ -723,7 +723,7 @@ const LEVELS = [
   start:{x:40,y:GROUND_Y-28},
   ground: buildGround(2750, [[720,790],[1470,1530]]),
   platforms: [],
-  blocks: [ blk(150,170,'ore'), blk(1280,170,'core','life') ],
+  blocks: [ blk(150,170,'ore'), blk(300,170,'core','boost'), blk(1280,170,'core','life') ],
   hazards: [ haz(390,450,224,6), haz(1030,1100,224,6), haz(1720,1800,224,6) ],
   enemies: [
     {type:'crawler', x:530, rangeMin:460, rangeMax:680},
@@ -733,7 +733,12 @@ const LEVELS = [
   ],
   vents: [ {x:250}, {x:930}, {x:1620} ],
   boss: {x:2300, y:GROUND_Y-56, minX:2210, maxX:2490},
-  gate: {x:2150, y:80, w:14, h:170},
+  // Was x:2150 -- *before* the boss's roam zone (minX:2210), which sealed
+  // the arena shut before the player could ever reach the boss (and even
+  // blocked ranged shots fired at it), since the gate only opens once the
+  // boss is dead. Moved past the boss's maxX so it instead traps the
+  // player in with the boss and only opens the way to the goal afterward.
+  gate: {x:2560, y:80, w:14, h:170},
   shards: [].concat(
     shardRow(180,190,3,16),
     shardRow(1310,150,4,16),
