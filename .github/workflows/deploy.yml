@@ -8,6 +8,7 @@ on:
       - 'cosmo-leap.html'
       - 'neon-dash.html'
       - 'assets/**'
+      - 'games/**'
   workflow_dispatch: {}
 
 jobs:
@@ -33,4 +34,4 @@ jobs:
           PORT="${SERVER_PORT:-22}"
           ssh-keyscan -p "$PORT" -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           export SSHPASS="$SSH_PASSWORD"
-          sshpass -e rsync -avz --exclude 'README.md' -e "ssh -p $PORT" cosmo-leap.html neon-dash.html assets "$SERVER_USER@$SERVER_HOST:$TARGET_PATH"
+          sshpass -e rsync -avz --exclude 'README.md' -e "ssh -p $PORT" cosmo-leap.html neon-dash.html assets games "$SERVER_USER@$SERVER_HOST:$TARGET_PATH"

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>NEON DASH — Sector 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="game" width="480" height="270"></canvas>
+
+    <div id="hud">
+      <div class="hud-block">
+        <div class="lvl-code" id="hud-lvlcode">1-1</div>
+        <div class="lvl-name" id="hud-lvlname">OUTER GRID</div>
+      </div>
+      <div class="hud-block hud-right">
+        <div class="row"><span class="lbl">SCORE</span><span class="val-score" id="hud-score">000000</span></div>
+        <div class="row"><span class="lbl">◆</span><span class="val-shard" id="hud-shards">00</span>
+          <span class="lbl">×</span><span class="val-lives" id="hud-lives">3</span>
+          <span class="lbl">⏱</span><span class="val-time" id="hud-time">150</span></div>
+      </div>
+    </div>
+
+    <div id="topbtns">
+      <div class="iconbtn" id="mute-btn">🔊</div>
+      <div class="iconbtn" id="pause-btn">⏸</div>
+    </div>
+
+    <!-- START -->
+    <div class="screen" id="screen-start">
+      <h1 class="title">NEON DASH</h1>
+      <p class="subtitle">SECTOR 1 — SIGNAL RUN</p>
+      <p class="desc">The relay network is down. As <b style="color:var(--cyan)">BOLT</b>, a scrapyard scout-bot, you must cross four broken zones and restore the sector's signal beacons — before whatever silenced them finds you too.</p>
+      <div class="keys">
+        <div><b>◀ ▶ / A D</b></div><div>move</div>
+        <div><b>▲ / SPACE</b></div><div>jump (hold = higher)</div>
+        <div><b>X / SHIFT</b></div><div>fire (once charged)</div>
+        <div><b>P / ESC</b></div><div>pause</div>
+      </div>
+      <div class="btnrow"><button class="btn" id="btn-start">▶ START RUN</button></div>
+      <footer class="hint">Touch controls appear automatically on mobile.</footer>
+    </div>
+
+    <!-- PLAYER SELECT -->
+    <div class="screen hidden" id="screen-playerselect">
+      <h2 class="bigmsg" style="color:var(--cyan)">SELECT PLAYERS</h2>
+      <div class="btnrow">
+        <div class="modecard">
+          <button class="btn" id="btn-1p">1 PLAYER</button>
+          <p class="modehint">◀▶ move · ▲/SPACE jump · X/SHIFT fire</p>
+        </div>
+        <div class="modecard">
+          <button class="btn alt" id="btn-2p">2 PLAYERS</button>
+          <p class="modehint">P1: <b>arrows</b> + / fire &nbsp;·&nbsp; P2: <b style="color:var(--magenta)">WASD</b> + F fire</p>
+        </div>
+      </div>
+      <p class="desc" style="max-width:420px">Co-op shares one pool of lives and one score — reach the beacon together.</p>
+      <div class="btnrow"><button class="btn ghost" id="btn-playerselect-back">◀ BACK</button></div>
+    </div>
+
+    <!-- LEVEL INTRO -->
+    <div class="screen hidden" id="screen-intro">
+      <div class="lvl-big" id="intro-code">1-1</div>
+      <div class="bigmsg" id="intro-name">OUTER GRID</div>
+    </div>
+
+    <!-- PAUSE -->
+    <div class="screen hidden" id="screen-pause">
+      <h2 class="bigmsg" style="color:var(--cyan)">PAUSED</h2>
+      <div class="btnrow">
+        <button class="btn" id="btn-resume">▶ RESUME</button>
+        <button class="btn alt" id="btn-restart-level">↺ RESTART ZONE</button>
+        <button class="btn ghost" id="btn-quit">■ QUIT TO MENU</button>
+      </div>
+    </div>
+
+    <!-- LEVEL COMPLETE -->
+    <div class="screen hidden" id="screen-levelcomplete">
+      <h2 class="bigmsg" style="color:var(--green)">BEACON RESTORED</h2>
+      <p class="statline">Time Bonus <b id="lc-timebonus">+0</b></p>
+      <p class="statline">Shards <b id="lc-shards">0</b></p>
+      <p class="statline">Score <b id="lc-score">0</b></p>
+      <div class="btnrow"><button class="btn" id="btn-continue">CONTINUE ▶</button></div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div class="screen hidden" id="screen-gameover">
+      <h2 class="bigmsg" style="color:var(--red)">SIGNAL LOST</h2>
+      <p class="statline">Final Score <b id="go-score">0</b></p>
+      <div class="btnrow">
+        <button class="btn" id="btn-retry">↺ TRY AGAIN</button>
+        <button class="btn ghost" id="btn-menu2">■ MAIN MENU</button>
+      </div>
+    </div>
+
+    <!-- WIN -->
+    <div class="screen hidden" id="screen-win">
+      <h1 class="title" style="font-size:clamp(14px,3.6vw,22px)">SECTOR 1 CLEAR</h1>
+      <p class="desc">OMEGA-9 is offline. The relay hums back to life across the grid. Sector 1's beacons are lit — for now.</p>
+      <p class="statline">Final Score <b id="win-score">0</b></p>
+      <div class="btnrow">
+        <button class="btn" id="btn-playagain">▶ PLAY AGAIN</button>
+      </div>
+    </div>
+
+    <div id="touch-controls">
+      <div class="tbtn" id="btn-left">◀</div>
+      <div class="tbtn" id="btn-right">▶</div>
+      <div class="tbtn" id="btn-fire">●</div>
+      <div class="tbtn" id="btn-jump">▲</div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

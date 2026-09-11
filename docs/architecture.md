@@ -1,15 +1,24 @@
 # Cosmo Leap — Engine Architecture
 
-This document explains how `cosmo-leap.html` is built: the patterns it uses
+> **Note:** the code originally lived in one `cosmo-leap.html` file; it's
+> since been split into ES modules under `games/cosmo-leap/js/` (same for
+> `neon-dash.html` → `games/neon-dash/js/`) so multiple people/sessions can
+> work on different parts in parallel — see `docs/development.md` for the
+> module layout and workflow. Everything below still describes the *design*
+> accurately; just read it as "this pattern lives in `js/<module>.js`"
+> rather than "this pattern lives at line N of the one file."
+
+This document explains how Cosmo Leap is built: the patterns it uses
 and why, so it can double as a learning reference for browser platformer
 engines in general (the same techniques show up in classic Mario-style
 clones like FullScreenMario, but everything described here is original code
 written for this project — no assets or level data were copied from
 anywhere).
 
-The whole game is one dependency-free HTML file: a `<canvas>`, some CSS for
-the HUD/menus, and a single `<script>` block. No build step, no external
-game libraries — just the 2D canvas API and the Web Audio API.
+The whole game is dependency-free: a `<canvas>`, some CSS for the HUD/menus,
+and plain ES modules (`games/cosmo-leap/js/*.js`) — split into one file per
+concern, but no build step and no external game libraries. Just the 2D
+canvas API and the Web Audio API.
 
 ## 1. Game loop & state machine
 
