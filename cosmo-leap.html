@@ -471,10 +471,11 @@ function beep(freq,dur,type,vol,slide){
 }
 
 const AUDIO_CLIPS = {};
+const AUDIO_POOL_SIZE = 4;
 function loadAudioClip(name, path){
   const el = new Audio(path);
   el.preload = 'auto';
-  const entry = { el, ready:false };
+  const entry = { el, ready:false, pool:[], poolIdx:0 };
   el.addEventListener('canplaythrough', ()=>{ entry.ready = true; }, {once:true});
   el.addEventListener('error', ()=>{ entry.ready = false; });
   AUDIO_CLIPS[name] = entry;
@@ -484,13 +485,19 @@ function loadAudioClip(name, path){
 
 // Plays a loaded clip and returns true so the caller skips its synth
 // fallback; returns false (nothing played) if the file isn't ready yet.
-// Each play clones the element so overlapping calls don't cut each
-// other off.
+// Reuses a small round-robin pool of cloned elements per sound (built up
+// lazily, capped at AUDIO_POOL_SIZE) instead of cloning a fresh node on
+// every single play -- frequent sounds like jump/shoot were otherwise
+// creating a steady stream of throwaway media elements, which is exactly
+// the kind of GC churn that shows up as a periodic stutter.
 function playClip(name){
   if(muted) return true;
   const c = AUDIO_CLIPS[name];
   if(!c || !c.ready) return false;
-  const node = c.el.cloneNode(true);
+  if(c.pool.length < AUDIO_POOL_SIZE) c.pool.push(c.el.cloneNode(true));
+  const node = c.pool[c.poolIdx];
+  c.poolIdx = (c.poolIdx+1) % c.pool.length;
+  node.currentTime = 0;
   node.volume = 0.55;
   node.play().catch(()=>{});
   return true;
@@ -563,6 +570,8 @@ function sprite(name, path){
   ['chest','assets/chest.png'],
   ['crate','assets/crate.png'],
   ['bomb','assets/bomb.png'],
+  ['floater','assets/floater.png'],
+  ['boss','assets/boss.png'],
   ['env-bg','assets/env-bg.webp'],
 ].forEach(([name,path])=>sprite(name,path));
 
@@ -1519,9 +1528,10 @@ function drawEnemyCrawler(e){
 }
 function drawEnemyFloater(e){
   const t=performance.now()/1000;
+  const sq = e.alive?1:Math.max(0.15,e.squish/0.22);
+  if(sq>0.9 && drawSpriteFit('floater', e.x+e.w/2, e.y+e.h/2, Math.max(e.w,e.h)*1.5)) return;
   ctx.save();
   ctx.translate(e.x+e.w/2, e.y+e.h/2);
-  const sq = e.alive?1:Math.max(0.15,e.squish/0.22);
   ctx.scale(1,sq);
   const g = ctx.createRadialGradient(-e.w*0.15,-e.h*0.2,1, 0,0,e.w/2);
   g.addColorStop(0,'#5c4a78'); g.addColorStop(1,'#2a1a44');
@@ -1548,13 +1558,18 @@ function drawBoss(){
   const flash = b.invuln>0 && Math.floor(performance.now()/80)%2===0;
   ctx.save();
   ctx.globalAlpha = b.dead ? Math.max(0,b.deadTimer/1.2) : 1;
-  ctx.fillStyle = flash ? '#ffffff' : '#3a1a3e';
-  ctx.fillRect(b.x, b.y, b.w, b.h);
-  ctx.fillStyle = '#ff6b81';
-  ctx.fillRect(b.x+b.w/2-10, b.y+14, 20, 12);
-  ctx.fillStyle = '#160a1e';
-  ctx.fillRect(b.x+8, b.y+b.h-10, 10, 10);
-  ctx.fillRect(b.x+b.w-18, b.y+b.h-10, 10, 10);
+  // the invuln white-flash is a readability cue worth keeping as a flat
+  // overlay rect rather than trying to tint the sprite, so it only falls
+  // back to the sprite when not mid-flash
+  if(flash || !drawSpriteFit('boss', b.x+b.w/2, b.y+b.h/2, Math.max(b.w,b.h)*1.15)){
+    ctx.fillStyle = flash ? '#ffffff' : '#3a1a3e';
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.fillStyle = '#ff6b81';
+    ctx.fillRect(b.x+b.w/2-10, b.y+14, 20, 12);
+    ctx.fillStyle = '#160a1e';
+    ctx.fillRect(b.x+8, b.y+b.h-10, 10, 10);
+    ctx.fillRect(b.x+b.w-18, b.y+b.h-10, 10, 10);
+  }
   ctx.restore();
   if(!b.dead){
     ctx.fillStyle='#140c22';
@@ -1662,7 +1677,14 @@ function drawPlayer(p){
   else if(hurt) poseName = prefix+'-hurt';
   else if(p.moving){
     const w1=SPRITES[prefix+'-walk1'], w2=SPRITES[prefix+'-walk2'];
-    if(w1.ready && w2.ready) poseName = (Math.floor(t*7)%2===0) ? prefix+'-walk1' : prefix+'-walk2';
+    if(w1.ready && w2.ready){
+      // Cycle speed follows actual velocity (3Hz near a standstill up to
+      // 9Hz at full speed) instead of a fixed rate, so the legs don't look
+      // disconnected from how fast the robot is actually moving.
+      const speedFrac = clamp(Math.abs(p.vx)/MAX_SPEED, 0, 1);
+      const cycleHz = 3 + speedFrac*6;
+      poseName = (Math.floor(t*cycleHz)%2===0) ? prefix+'-walk1' : prefix+'-walk2';
+    }
     else if(w1.ready) poseName = prefix+'-walk1';
   }
   // 2.3x was tuned for the old, narrow Viking silhouette; the chunkier

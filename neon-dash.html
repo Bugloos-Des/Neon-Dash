@@ -447,10 +447,11 @@ function beep(freq,dur,type,vol,slide){
 }
 
 const AUDIO_CLIPS = {};
+const AUDIO_POOL_SIZE = 4;
 function loadAudioClip(name, path){
   const el = new Audio(path);
   el.preload = 'auto';
-  const entry = { el, ready:false };
+  const entry = { el, ready:false, pool:[], poolIdx:0 };
   el.addEventListener('canplaythrough', ()=>{ entry.ready = true; }, {once:true});
   el.addEventListener('error', ()=>{ entry.ready = false; });
   AUDIO_CLIPS[name] = entry;
@@ -460,13 +461,19 @@ function loadAudioClip(name, path){
 
 // Plays a loaded clip and returns true so the caller skips its synth
 // fallback; returns false (nothing played) if the file isn't ready yet.
-// Each play clones the element so overlapping calls don't cut each
-// other off.
+// Reuses a small round-robin pool of cloned elements per sound (built up
+// lazily, capped at AUDIO_POOL_SIZE) instead of cloning a fresh node on
+// every single play -- frequent sounds like jump/shoot were otherwise
+// creating a steady stream of throwaway media elements, which is exactly
+// the kind of GC churn that shows up as a periodic stutter.
 function playClip(name){
   if(muted) return true;
   const c = AUDIO_CLIPS[name];
   if(!c || !c.ready) return false;
-  const node = c.el.cloneNode(true);
+  if(c.pool.length < AUDIO_POOL_SIZE) c.pool.push(c.el.cloneNode(true));
+  const node = c.pool[c.poolIdx];
+  c.poolIdx = (c.poolIdx+1) % c.pool.length;
+  node.currentTime = 0;
   node.volume = 0.55;
   node.play().catch(()=>{});
   return true;

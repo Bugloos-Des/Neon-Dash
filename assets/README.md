@@ -65,6 +65,8 @@ export every pose facing **right**.
 | `chest.png` | the glowing "core" block (item-dispensing) |
 | `crate.png` | the plain breakable "ore" block |
 | `bomb.png` | the rolling crawler enemy |
+| `floater.png` | the hovering floater enemy |
+| `boss.png` | the sector boss (not shown during its white invuln-hit flash, which stays a flat color for readability) |
 
 These don't need a baseline anchor — they're centered and scaled to
 fit their in-game bounding box, so square-ish artboards work best.
