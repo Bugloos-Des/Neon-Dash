@@ -7,12 +7,14 @@ drawing, so files can be added one at a time without breaking the game.
 
 ## `start-bg.webp`
 
-AI-generated 8-bit key art used as the backdrop for `neon-dash.html`'s
-start and player-select screens (and, dimmed, behind the whole page).
-It's referenced by CSS `background-image`, so swapping in a different
-piece of art is just replacing this file (or repointing the two
-`url('assets/start-bg.webp')` rules in `neon-dash.html`) — no code
-changes needed. The in-game canvas itself is still drawn procedurally,
+AI-generated 8-bit key art shared by both games as the backdrop for
+their start and player-select screens (and, dimmed, behind the whole
+page) — `neon-dash.html` and `cosmo-leap.html` each have their own two
+`url('assets/start-bg.webp')` CSS rules pointing at this same file. It's
+referenced by CSS `background-image`, so swapping in a different piece
+of art (or giving each game its own) is just replacing/adding a file and
+repointing those rules — no other code changes needed. The in-game
+canvas itself is still drawn procedurally,
 untouched by this image.
 
 ## Exporting from Illustrator
