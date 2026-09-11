@@ -17,9 +17,21 @@ page) — `neon-dash.html` and `cosmo-leap.html` each have their own two
 `url('assets/start-bg.webp')` CSS rules pointing at this same file. It's
 referenced by CSS `background-image`, so swapping in a different piece
 of art (or giving each game its own) is just replacing/adding a file and
-repointing those rules — no other code changes needed. The in-game
-canvas itself is still drawn procedurally,
-untouched by this image.
+repointing those rules — no other code changes needed.
+
+## `env-bg.webp`
+
+AI-generated in-canvas level backdrop for `cosmo-leap.html` (same neon
+pixel-art style/reference as `start-bg.webp`, so the actual gameplay
+now matches the menus and the robot characters instead of looking like
+a different game). It's drawn once per frame as a **static** layer —
+deliberately not tiled or scrolled with the camera, since the source
+art has a centered vanishing-point composition that wouldn't repeat
+seamlessly — with each level's theme color washed over it at low alpha
+for variety (see `drawBackground()`). Falls back to the original
+procedural gradient+silhouettes look if the file is missing, same rule
+as every other asset here. `neon-dash.html` doesn't use this file; it
+still draws its own background procedurally.
 
 ## Character poses (`p1-*.png` / `p2-*.png`)
 
