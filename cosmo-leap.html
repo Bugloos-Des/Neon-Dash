@@ -420,6 +420,72 @@ document.getElementById('mute-btn').addEventListener('click', toggleMute);
 function toggleMute(){ muted=!muted; document.getElementById('mute-btn').textContent = muted?'🔇':'🔊'; }
 
 /* =========================================================
+   OPTIONAL SVG SPRITES
+   Drop matching files into assets/ (see assets/README.md for exact
+   names, sizing and anchor conventions) to replace the built-in
+   vector-drawn look. Anything not present yet just falls back to the
+   procedural drawing right below its usage -- nothing breaks while
+   assets are added incrementally.
+   ========================================================= */
+const SPRITES = {};
+function sprite(name, path){
+  const entry = { img:new Image(), ready:false };
+  entry.img.onload = ()=>{ entry.ready = true; };
+  entry.img.onerror = ()=>{ entry.ready = false; };
+  entry.img.src = path;
+  SPRITES[name] = entry;
+}
+[
+  ['viking-idle','assets/viking-idle.svg'],
+  ['viking-walk1','assets/viking-walk1.svg'],
+  ['viking-walk2','assets/viking-walk2.svg'],
+  ['viking-jump','assets/viking-jump.svg'],
+  ['viking-shoot','assets/viking-shoot.svg'],
+  ['viking-hurt','assets/viking-hurt.svg'],
+  ['viking-dead','assets/viking-dead.svg'],
+  ['arrow','assets/arrow.svg'],
+  ['bow-icon','assets/bow-icon.svg'],
+  ['gem','assets/gem.svg'],
+  ['coin','assets/coin.svg'],
+  ['chest','assets/chest.svg'],
+  ['crate','assets/crate.svg'],
+  ['bomb','assets/bomb.svg'],
+].forEach(([name,path])=>sprite(name,path));
+
+// Draws a loaded sprite anchored by its bottom-center point (for
+// characters: place their feet at (footX,footY) in the art), scaled to
+// a target height with aspect ratio preserved. Returns false (drawing
+// nothing) if the sprite isn't loaded, so the caller can fall back.
+function drawSpriteAnchored(name, footX, footY, targetH, flip){
+  const s = SPRITES[name];
+  if(!s || !s.ready || !s.img.naturalHeight) return false;
+  const scale = targetH / s.img.naturalHeight;
+  const w = s.img.naturalWidth*scale;
+  ctx.save();
+  ctx.translate(footX, footY);
+  if(flip) ctx.scale(-1,1);
+  ctx.drawImage(s.img, -w/2, -targetH, w, targetH);
+  ctx.restore();
+  return true;
+}
+// Draws a loaded sprite fit within maxSize (longest side), centered at
+// (cx,cy) -- for small symmetric icons (gems, coins, blocks) and, with
+// flip:true, direction-facing shots like the arrow. Returns false if
+// not loaded, so the caller can fall back.
+function drawSpriteFit(name, cx, cy, maxSize, flip){
+  const s = SPRITES[name];
+  if(!s || !s.ready || !s.img.naturalWidth) return false;
+  const scale = maxSize / Math.max(s.img.naturalWidth, s.img.naturalHeight);
+  const w = s.img.naturalWidth*scale, h = s.img.naturalHeight*scale;
+  ctx.save();
+  ctx.translate(cx,cy);
+  if(flip) ctx.scale(-1,1);
+  ctx.drawImage(s.img, -w/2, -h/2, w, h);
+  ctx.restore();
+  return true;
+}
+
+/* =========================================================
    LEVEL DATA
    ========================================================= */
 function seg(x1,x2){ return {x:x1, y:GROUND_Y, w:x2-x1, h: CH+120-GROUND_Y, type:'solid'}; }
@@ -1132,8 +1198,13 @@ function drawBlocks(){
   for(const b of game.blocks){
     const off = b.bump>0 ? -Math.sin((0.15-b.bump)/0.15*Math.PI)*4 : 0;
     const y = b.y+off;
-    if(b.kind==='core') drawChestBlock(b, y);
-    else drawCrateBlock(b, y);
+    if(b.kind==='core'){
+      if(drawSpriteFit('chest', b.x+b.w/2, y+b.h/2, b.w*1.15)) continue;
+      drawChestBlock(b, y);
+    } else {
+      if(drawSpriteFit('crate', b.x+b.w/2, y+b.h/2, b.w*1.15)) continue;
+      drawCrateBlock(b, y);
+    }
   }
 }
 
@@ -1184,6 +1255,7 @@ function drawShards(){
   for(const s of game.shards){
     if(s.collected) continue;
     const bob = Math.sin(t*3 + s.x)*3;
+    if(drawSpriteFit('gem', s.x, s.y+bob, 13)) continue;
     ctx.save();
     ctx.translate(s.x, s.y+bob);
     ctx.rotate(Math.sin(t*1.5 + s.x)*0.35);
@@ -1235,14 +1307,17 @@ function drawItems(){
     const x = it.x, y = it.y+bob;
     if(it.type==='boost'){
       // gold star-coin token: grants the double-jump boost
+      if(drawSpriteFit('coin', x+9, y+9, 20)) continue;
       drawCoinToken(x+9, y+9, 9, '★', '#8a5a10', '#fff3d0', '#ffb347');
     } else if(it.type==='nova'){
       // bow token: grants the ranged arrow shot
+      if(drawSpriteFit('bow-icon', x+9, y+9+Math.sin(t*4)*1.5, 20)) continue;
       ctx.save(); ctx.translate(0, Math.sin(t*4)*1.5);
       drawBowIcon(x+9, y+9, 8);
       ctx.restore();
     } else if(it.type==='shield'){
       // spinning gem: grants temporary invincibility
+      if(drawSpriteFit('gem', x+9, y+9, 20)) continue;
       ctx.save(); ctx.translate(x+9,y+9); ctx.rotate(t*3);
       drawGem(9, '#fff0f5', '#ff6b81', '#8a1c30');
       ctx.restore();
@@ -1255,6 +1330,7 @@ function drawItems(){
 function drawEnemyCrawler(e){
   const sq = e.alive ? 1 : Math.max(0.15, e.squish/0.22);
   const t = performance.now()/1000;
+  if(sq>0.9 && drawSpriteFit('bomb', e.x+e.w/2, e.y+e.h/2, e.w*1.3)) return;
   ctx.save();
   ctx.translate(e.x+e.w/2, e.y+e.h);
   ctx.scale(1, sq);
@@ -1333,6 +1409,7 @@ function drawBoss(){
 function drawProjectiles(){
   for(const pr of game.projectiles){
     if(pr.fromPlayer){
+      if(drawSpriteFit('arrow', pr.x+pr.w/2, pr.y+pr.h/2, pr.w*2.2, pr.vx<0)) continue;
       // arrow: wooden shaft, grey head, feather fletching -- oriented
       // to the direction it's actually flying
       ctx.save();
@@ -1416,6 +1493,20 @@ function drawPlayer(){
   const shooting = p.shootPoseTimer>0;
   const hurt = p.hurtTimer>0;
   const dying = game.state==='dying';
+
+  // try an SVG sprite for the current pose first; only fall back to the
+  // procedural vector Viking below if that file hasn't been added yet
+  let poseName = 'viking-idle';
+  if(dying) poseName = 'viking-dead';
+  else if(shooting) poseName = 'viking-shoot';
+  else if(airborne) poseName = 'viking-jump';
+  else if(hurt) poseName = 'viking-hurt';
+  else if(keys.left||keys.right){
+    const w1=SPRITES['viking-walk1'], w2=SPRITES['viking-walk2'];
+    if(w1.ready && w2.ready) poseName = (Math.floor(t*7)%2===0) ? 'viking-walk1' : 'viking-walk2';
+    else if(w1.ready) poseName = 'viking-walk1';
+  }
+  if(drawSpriteAnchored(poseName, p.x+p.w/2, p.y+p.h, p.h*2.3, p.facing<0)) return;
 
   ctx.save();
   ctx.translate(p.x+p.w/2, p.y+p.h/2);

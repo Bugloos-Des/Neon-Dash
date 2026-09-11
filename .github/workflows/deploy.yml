@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'cosmo-leap.html'
+      - 'assets/**'
   workflow_dispatch: {}
 
 jobs:
@@ -30,4 +31,5 @@ jobs:
           mkdir -p ~/.ssh
           PORT="${SERVER_PORT:-22}"
           ssh-keyscan -p "$PORT" -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          sshpass -p "$SSH_PASSWORD" scp -P "$PORT" cosmo-leap.html "$SERVER_USER@$SERVER_HOST:$TARGET_PATH"
+          export SSHPASS="$SSH_PASSWORD"
+          sshpass -e rsync -avz --exclude 'README.md' -e "ssh -p $PORT" cosmo-leap.html assets "$SERVER_USER@$SERVER_HOST:$TARGET_PATH"
