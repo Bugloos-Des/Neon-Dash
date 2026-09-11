@@ -22,7 +22,10 @@
   *{box-sizing:border-box;}
   html,body{
     margin:0;padding:0;height:100%;
-    background:radial-gradient(ellipse at 50% 20%, #0d1430 0%, #05060d 60%);
+    background:
+      radial-gradient(ellipse at 50% 20%, rgba(13,20,48,0.75) 0%, rgba(5,6,13,0.94) 60%),
+      url('assets/start-bg.webp') center/cover no-repeat fixed,
+      #05060d;
     color:var(--text);
     font-family:'VT323',monospace;
     overflow:hidden;
@@ -101,6 +104,11 @@
     gap:10px;
   }
   .screen.hidden{ display:none; }
+  #screen-start, #screen-playerselect{
+    background:
+      linear-gradient(180deg, rgba(3,4,10,0.35) 0%, rgba(3,4,10,0.55) 45%, rgba(3,4,10,0.94) 88%),
+      url('assets/start-bg.webp') center 38%/cover no-repeat;
+  }
   .title{
     font-family:'Press Start 2P', monospace;
     color:var(--cyan);
@@ -160,6 +168,20 @@
     font-size:clamp(12px,2.6vw,16px); color:var(--text-dim); text-align:left;
   }
   .keys b{ color:var(--cyan); }
+  .modecard{
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    width:210px; max-width:44vw;
+    padding:12px 10px;
+    background:rgba(8,11,22,0.55);
+    border:1px solid rgba(0,229,255,0.18);
+    border-radius:8px;
+  }
+  .modecard .btn{ width:100%; }
+  .modehint{
+    font-size:clamp(9px,2vw,12px); color:var(--text-dim);
+    line-height:1.4;
+  }
+  .modehint b{ color:var(--cyan); }
   #screen-intro .lvl-big{
     font-family:'Press Start 2P', monospace;
     color:var(--amber);
@@ -234,6 +256,23 @@
       </div>
       <div class="btnrow"><button class="btn" id="btn-start">▶ START RUN</button></div>
       <footer class="hint">Touch controls appear automatically on mobile.</footer>
+    </div>
+
+    <!-- PLAYER SELECT -->
+    <div class="screen hidden" id="screen-playerselect">
+      <h2 class="bigmsg" style="color:var(--cyan)">SELECT PLAYERS</h2>
+      <div class="btnrow">
+        <div class="modecard">
+          <button class="btn" id="btn-1p">1 PLAYER</button>
+          <p class="modehint">◀▶ move · ▲/SPACE jump · X/SHIFT fire</p>
+        </div>
+        <div class="modecard">
+          <button class="btn alt" id="btn-2p">2 PLAYERS</button>
+          <p class="modehint">P1: <b>arrows</b> + / fire &nbsp;·&nbsp; P2: <b style="color:var(--magenta)">WASD</b> + F fire</p>
+        </div>
+      </div>
+      <p class="desc" style="max-width:420px">Co-op shares one pool of lives and one score — reach the beacon together.</p>
+      <div class="btnrow"><button class="btn ghost" id="btn-playerselect-back">◀ BACK</button></div>
     </div>
 
     <!-- LEVEL INTRO -->
@@ -318,27 +357,47 @@ const clone = (o)=> JSON.parse(JSON.stringify(o));
 /* =========================================================
    INPUT
    ========================================================= */
-const keys = { left:false, right:false, jumpHeld:false, fire:false, jumpPressed:false, jumpReleased:false };
+// keys1 = Player 1. In 1-player mode it also answers to WASD/X/Shift so a
+// solo player can use either control scheme, exactly like the game always
+// has. In 2-player mode it's Arrow-keys-only so it can't collide with P2.
+const keys1 = { left:false, right:false, jumpHeld:false, fire:false, jumpPressed:false, jumpReleased:false };
+const keys2 = { left:false, right:false, jumpHeld:false, fire:false, jumpPressed:false, jumpReleased:false };
 
 function unlockAudioOnce(){ ensureAudio(); window.removeEventListener('keydown', unlockAudioOnce); window.removeEventListener('pointerdown', unlockAudioOnce); }
 window.addEventListener('keydown', unlockAudioOnce, {once:false});
 window.addEventListener('pointerdown', unlockAudioOnce, {once:false});
 
+const PREVENT_DEFAULT_CODES = ['ArrowLeft','ArrowRight','ArrowUp','Space','KeyW','KeyA','KeyD','KeyF','Slash','ShiftLeft','ShiftRight'];
 window.addEventListener('keydown', (e)=>{
-  if(['ArrowLeft','ArrowRight','ArrowUp','Space','KeyW','KeyA','KeyD'].includes(e.code)) e.preventDefault();
+  if(PREVENT_DEFAULT_CODES.includes(e.code)) e.preventDefault();
   handleKey(e.code, true);
 });
 window.addEventListener('keyup', (e)=>{ handleKey(e.code, false); });
 
+function setJump(k, down){
+  if(down && !k.jumpHeld) k.jumpPressed = true;
+  if(!down) k.jumpReleased = true;
+  k.jumpHeld = down;
+}
+
 function handleKey(code, down){
-  if(code==='ArrowLeft'||code==='KeyA') keys.left = down;
-  if(code==='ArrowRight'||code==='KeyD') keys.right = down;
-  if(code==='ArrowUp'||code==='KeyW'||code==='Space'){
-    if(down && !keys.jumpHeld) keys.jumpPressed = true;
-    if(!down) keys.jumpReleased = true;
-    keys.jumpHeld = down;
+  const twoP = game.mode==='2p';
+
+  // Player 1: arrow keys always; WASD/X/Shift too, but only when solo
+  // (so those keys are free for Player 2 in co-op).
+  if(code==='ArrowLeft' || (!twoP && code==='KeyA')) keys1.left = down;
+  if(code==='ArrowRight' || (!twoP && code==='KeyD')) keys1.right = down;
+  if(code==='ArrowUp' || code==='Space' || (!twoP && code==='KeyW')) setJump(keys1, down);
+  if(code==='Slash' || code==='ShiftRight' || (!twoP && (code==='KeyX'||code==='KeyK'||code==='ShiftLeft'))) keys1.fire = down;
+
+  // Player 2: WASD to move/jump, F (or left-Shift) to fire — co-op only.
+  if(twoP){
+    if(code==='KeyA') keys2.left = down;
+    if(code==='KeyD') keys2.right = down;
+    if(code==='KeyW') setJump(keys2, down);
+    if(code==='KeyF' || code==='ShiftLeft') keys2.fire = down;
   }
-  if(code==='KeyX'||code==='KeyK'||code==='ShiftLeft'||code==='ShiftRight') keys.fire = down;
+
   if(down && (code==='KeyP'||code==='Escape')) togglePause();
   if(down && code==='KeyM') toggleMute();
   if(down && (code==='Enter'||code==='Space')) confirmScreen();
@@ -353,10 +412,11 @@ function bindTouch(id, onDown, onUp){
   el.addEventListener('pointerleave', up);
   el.addEventListener('pointercancel', up);
 }
-bindTouch('btn-left', ()=>keys.left=true, ()=>keys.left=false);
-bindTouch('btn-right', ()=>keys.right=true, ()=>keys.right=false);
-bindTouch('btn-fire', ()=>keys.fire=true, ()=>keys.fire=false);
-bindTouch('btn-jump', ()=>{ if(!keys.jumpHeld) keys.jumpPressed=true; keys.jumpHeld=true; }, ()=>{ keys.jumpHeld=false; keys.jumpReleased=true; });
+// Touch controls always drive Player 1 (co-op is keyboard-only, see #screen-playerselect).
+bindTouch('btn-left', ()=>keys1.left=true, ()=>keys1.left=false);
+bindTouch('btn-right', ()=>keys1.right=true, ()=>keys1.right=false);
+bindTouch('btn-fire', ()=>keys1.fire=true, ()=>keys1.fire=false);
+bindTouch('btn-jump', ()=>{ if(!keys1.jumpHeld) keys1.jumpPressed=true; keys1.jumpHeld=true; }, ()=>{ keys1.jumpHeld=false; keys1.jumpReleased=true; });
 
 /* =========================================================
    AUDIO (tiny synth, no assets)
@@ -543,8 +603,9 @@ function makeBoss(b){ return {type:'boss', x:b.x, y:b.y, w:64, h:56, vx:60, minX
    ========================================================= */
 const game = {
   state:'start', // start, intro, playing, dying, paused, levelcomplete, gameover, win
+  mode:'1p', // '1p' or '2p' (co-op) — chosen on the player-select screen
   levelIndex:0, level:null, introTimer:0,
-  player:null,
+  player:null, player2:null, dyingPlayer:null,
   camera:{x:0, shake:0},
   solids:[], blocks:[], enemies:[], turrets:[], boss:null, gate:null, gateActive:false,
   hazardsZones:[], shards:[], items:[], projectiles:[], particles:[],
@@ -552,8 +613,16 @@ const game = {
   goalReached:false, comboCount:0,
 };
 
-function newPlayer(){
-  return { x:40, y:GROUND_Y-28, vx:0, vy:0, w:22, h:28, onGround:false, facing:1,
+// The active roster for this run: just P1 solo, or P1+P2 in co-op.
+function activePlayers(){
+  const arr = [];
+  if(game.player) arr.push(game.player);
+  if(game.player2) arr.push(game.player2);
+  return arr;
+}
+
+function newPlayer(id){
+  return { id: id||1, x:40, y:GROUND_Y-28, vx:0, vy:0, w:22, h:28, onGround:false, facing:1,
     power:0, hurtTimer:0, starTimer:0, shootCd:0, coyote:0, jumpBuffer:0 };
 }
 function recomputeSize(p){ const bottom=p.y+p.h; p.h = p.power>=1 ? 38 : 28; p.y = bottom-p.h; }
@@ -578,58 +647,62 @@ function loadLevel(idx){
   game.timeLeft = lvl.timeLimit || 150;
   game.goalReached = false;
   game.comboCount = 0;
-  game.player.x = lvl.start.x; game.player.y = lvl.start.y - (game.player.h-28);
-  game.player.vx=0; game.player.vy=0; game.player.onGround=false; game.player.hurtTimer=1.0;
+  activePlayers().forEach((p,i)=>{
+    p.x = lvl.start.x + i*16; p.y = lvl.start.y - (p.h-28);
+    p.vx=0; p.vy=0; p.onGround=false; p.hurtTimer=1.0;
+  });
   document.getElementById('hud-lvlcode').textContent = lvl.code;
   document.getElementById('hud-lvlname').textContent = lvl.name;
   document.getElementById('intro-code').textContent = lvl.code;
   document.getElementById('intro-name').textContent = lvl.name;
 }
 
-function startNewGame(){
+function startNewGame(mode){
+  game.mode = mode || game.mode || '1p';
   game.score=0; game.lives=3; game.levelIndex=0;
-  game.player = newPlayer();
+  game.player = newPlayer(1);
+  game.player2 = game.mode==='2p' ? newPlayer(2) : null;
   loadLevel(0);
   game.state='intro'; game.introTimer=1.7;
   hideAllScreens();
 }
 
-function startDeath(){
+function startDeath(p){
   if(game.state==='dying') return;
   game.state='dying';
-  game.player.vx=0; game.player.vy=-420;
-  game.player.deathTimer = DEATH_TIME;
+  game.dyingPlayer = p;
+  p.vx=0; p.vy=-420;
+  p.deathTimer = DEATH_TIME;
   SFX.hit();
 }
 function handleDeath(){
   game.lives--;
+  game.dyingPlayer = null;
   if(game.lives<=0){
     game.state='gameover';
     SFX.gameover();
     document.getElementById('go-score').textContent = game.score;
     showScreen('gameover');
   } else {
-    game.player.power=0;
+    activePlayers().forEach(p=>p.power=0);
     loadLevel(game.levelIndex);
     game.state='intro'; game.introTimer=1.2;
   }
 }
-function damagePlayer(){
-  const p = game.player;
+function damagePlayer(p){
   if(p.hurtTimer>0 || p.starTimer>0) return;
   if(p.power>0){
     p.power=0; recomputeSize(p);
     p.hurtTimer = HURT_TIME;
     SFX.hit();
   } else {
-    startDeath();
+    startDeath(p);
   }
 }
 
-function stompEnemy(e){
+function stompEnemy(e, p){
   e.alive=false; e.squish=0.22; e.remove=false;
-  const p=game.player;
-  p.vy = -270;
+  if(p) p.vy = -270;
   game.comboCount++;
   const gain = Math.min(800, 100*Math.pow(2, game.comboCount-1));
   game.score += gain;
@@ -638,11 +711,11 @@ function stompEnemy(e){
   SFX.stomp();
 }
 
-function bossHit(){
+function bossHit(p){
   const b = game.boss;
   if(!b || b.dead || b.invuln>0) return;
   b.hp--; b.invuln=1.0;
-  game.player.vy=-260;
+  if(p) p.vy=-260;
   spawnParticles(b.x+b.w/2, b.y+10, '#ffc24b', 10);
   spawnTextParticle('HIT '+b.hp+'/'+b.maxHp, b.x+b.w/2, b.y-10, '#ffc24b');
   SFX.bossHit();
@@ -687,15 +760,15 @@ function advanceLevel(){
 function spawnPopItem(type,x,y,dir){
   game.items.push({type, x, y:y-4, w:18, h:18, collected:false, spawning:true, spawnTimer:0.35, vx: type==='nano'?(dir*40):0, vy:0});
 }
-function hitBlock(s){
+function hitBlock(s, dir){
   s.bump = 0.15;
   if(s.kind==='energy'){
     if(!s.used){
       s.used = true;
-      giveBlockItem(s);
+      giveBlockItem(s, dir);
     } else { SFX.bump(); }
   } else if(s.kind==='data'){
-    if(game.player.power>0){
+    if(activePlayers().some(p=>p.power>0)){
       game.solids = game.solids.filter(x=>x!==s);
       game.blocks = game.blocks.filter(x=>x!==s);
       spawnParticles(s.x+12, s.y+12, '#ffc24b', 8);
@@ -705,9 +778,9 @@ function hitBlock(s){
     }
   }
 }
-function giveBlockItem(s){
+function giveBlockItem(s, dir){
   switch(s.item){
-    case 'nano': spawnPopItem('nano', s.x+3, s.y, game.player.facing||1); SFX.power(); break;
+    case 'nano': spawnPopItem('nano', s.x+3, s.y, dir||1); SFX.power(); break;
     case 'plasma': spawnPopItem('plasma', s.x+3, s.y, 0); SFX.power(); break;
     case 'shardburst':
       game.score += 50; game.shardsCollected += 5;
@@ -724,9 +797,8 @@ function giveBlockItem(s){
     default: SFX.bump();
   }
 }
-function collectItem(it){
+function collectItem(it, p){
   it.collected = true;
-  const p = game.player;
   if(it.type==='nano'){
     if(p.power<1){ p.power=1; recomputeSize(p); } else { game.score+=200; spawnTextParticle('+200', it.x, it.y, '#00e5ff'); }
     SFX.power();
@@ -757,16 +829,15 @@ function resolveEntityCollisions(e, solids, dt){
   for(const s of solids){
     if(rectsOverlap(e,s)){
       if(e.vy>0){ e.y = s.y - e.h; e.vy=0; e.onGround=true; }
-      else if(e.vy<0){ e.y = s.y + s.h; e.vy=0; if(s.type==='block') hitBlock(s); }
+      else if(e.vy<0){ e.y = s.y + s.h; e.vy=0; if(s.type==='block') hitBlock(s, e.facing||1); }
     }
   }
 }
 
-function updatePlayerPhysics(dt){
-  const p = game.player;
+function updatePlayerPhysics(dt, p, k){
   let dir = 0;
-  if(keys.left) dir -= 1;
-  if(keys.right) dir += 1;
+  if(k.left) dir -= 1;
+  if(k.right) dir += 1;
   const cap = MAX_SPEED * (p.starTimer>0 ? 1.3 : 1);
   if(dir!==0){ p.vx += dir*MOVE_ACCEL*dt; p.facing = dir; }
   else {
@@ -776,17 +847,17 @@ function updatePlayerPhysics(dt){
   p.vx = clamp(p.vx, -cap, cap);
 
   if(p.onGround) p.coyote = COYOTE_TIME; else p.coyote = Math.max(0, p.coyote-dt);
-  if(keys.jumpPressed){ p.jumpBuffer = JUMP_BUFFER; keys.jumpPressed=false; }
+  if(k.jumpPressed){ p.jumpBuffer = JUMP_BUFFER; k.jumpPressed=false; }
   else { p.jumpBuffer = Math.max(0, p.jumpBuffer-dt); }
   if(p.jumpBuffer>0 && p.coyote>0){
     p.vy = JUMP_VELOCITY; p.onGround=false; p.coyote=0; p.jumpBuffer=0; SFX.jump();
   }
-  if(keys.jumpReleased){ if(p.vy<0) p.vy *= JUMP_CUT; keys.jumpReleased=false; }
+  if(k.jumpReleased){ if(p.vy<0) p.vy *= JUMP_CUT; k.jumpReleased=false; }
 
   p.vy += GRAVITY*dt; if(p.vy>MAX_FALL) p.vy = MAX_FALL;
 
   if(p.shootCd>0) p.shootCd -= dt;
-  if(keys.fire && p.power>=2 && p.shootCd<=0){
+  if(k.fire && p.power>=2 && p.shootCd<=0){
     game.projectiles.push({type:'plasma', x: p.x + (p.facing>0?p.w:-8), y: p.y+p.h*0.35, vx: p.facing*PLASMA_SPEED, vy:0, w:8, h:6, life:PLASMA_LIFE, fromPlayer:true});
     p.shootCd = PLASMA_COOLDOWN;
     SFX.shoot();
@@ -798,7 +869,7 @@ function updatePlayerPhysics(dt){
   if(p.hurtTimer>0) p.hurtTimer -= dt;
   if(p.starTimer>0) p.starTimer -= dt;
 
-  if(p.y > CH+150) startDeath();
+  if(p.y > CH+150) startDeath(p);
 }
 
 function updateEnemies(dt){
@@ -836,7 +907,10 @@ function updateBoss(dt){
   b.shootTimer -= dt;
   if(b.shootTimer<=0){
     b.shootTimer = 1.9;
-    const dir = game.player.x < b.x ? -1 : 1;
+    // Target whichever active player is nearest.
+    const nearest = activePlayers().reduce((best,p)=>
+      (!best || Math.abs(p.x-b.x) < Math.abs(best.x-b.x)) ? p : best, null);
+    const dir = (nearest && nearest.x < b.x) ? -1 : 1;
     game.projectiles.push({type:'bolt', x:b.x+b.w/2, y:b.y+b.h*0.5, vx:dir*230, vy:0, w:10, h:8, life:2.5, fromPlayer:false});
     SFX.shoot();
   }
@@ -853,8 +927,9 @@ function updateProjectiles(dt){
       }
       if(game.boss && !game.boss.dead && rectsOverlap(pr,game.boss)){ bossHit(); pr.dead=true; }
     } else {
-      const p = game.player;
-      if(p.hurtTimer<=0 && p.starTimer<=0 && rectsOverlap(pr,p)){ damagePlayer(); pr.dead=true; }
+      for(const p of activePlayers()){
+        if(p.hurtTimer<=0 && p.starTimer<=0 && rectsOverlap(pr,p)){ damagePlayer(p); pr.dead=true; break; }
+      }
     }
   }
   game.projectiles = game.projectiles.filter(p=>!p.dead);
@@ -879,24 +954,23 @@ function updateItems(dt){
 
 function turretRect(t){ return {x:t.x, y:t.y, w:28, h:t.h}; }
 
-function checkPlayerVsWorld(){
-  const p = game.player;
+function checkPlayerVsWorld(p){
   for(const e of game.enemies){
     if(!e.alive || !rectsOverlap(p,e)) continue;
-    if(p.starTimer>0){ stompEnemy(e); continue; }
-    if(p.vy>0 && (p.y+p.h - e.y) < 12){ stompEnemy(e); }
-    else { damagePlayer(); }
+    if(p.starTimer>0){ stompEnemy(e, p); continue; }
+    if(p.vy>0 && (p.y+p.h - e.y) < 12){ stompEnemy(e, p); }
+    else { damagePlayer(p); }
   }
   for(const t of game.turrets){
-    if(t.state==='extended' && p.starTimer<=0 && rectsOverlap(p, turretRect(t))) damagePlayer();
+    if(t.state==='extended' && p.starTimer<=0 && rectsOverlap(p, turretRect(t))) damagePlayer(p);
   }
   if(game.boss && !game.boss.dead && rectsOverlap(p, game.boss)){
-    if(p.starTimer>0){ bossHit(); }
-    else if(p.vy>0 && (p.y+p.h - game.boss.y) < 16){ bossHit(); }
-    else damagePlayer();
+    if(p.starTimer>0){ bossHit(p); }
+    else if(p.vy>0 && (p.y+p.h - game.boss.y) < 16){ bossHit(p); }
+    else damagePlayer(p);
   }
   for(const h of game.hazardsZones){
-    if(p.starTimer<=0 && rectsOverlap(p,h)) damagePlayer();
+    if(p.starTimer<=0 && rectsOverlap(p,h)) damagePlayer(p);
   }
   for(const s of game.shards){
     if(!s.collected && rectsOverlap(p, {x:s.x-6,y:s.y-6,w:12,h:12})){
@@ -905,7 +979,7 @@ function checkPlayerVsWorld(){
     }
   }
   for(const it of game.items){
-    if(!it.collected && !it.spawning && rectsOverlap(p,it)) collectItem(it);
+    if(!it.collected && !it.spawning && rectsOverlap(p,it)) collectItem(it, p);
   }
   if(game.level.goal && !game.goalReached){
     const g = game.level.goal;
@@ -939,7 +1013,7 @@ function updateParticles(dt){
    MAIN UPDATE
    ========================================================= */
 function updateDying(dt){
-  const p = game.player;
+  const p = game.dyingPlayer;
   p.vy += GRAVITY*dt; p.x += p.vx*dt; p.y += p.vy*dt;
   p.deathTimer -= dt;
   updateParticles(dt);
@@ -957,21 +1031,32 @@ function update(dt){
   if(game.state!=='playing') return;
 
   game.timeLeft -= dt;
-  if(game.timeLeft<=0){ game.timeLeft=0; startDeath(); return; }
+  if(game.timeLeft<=0){ game.timeLeft=0; startDeath(activePlayers()[0]); return; }
 
-  updatePlayerPhysics(dt);
+  // Each player runs its own physics/input; if one triggers a death mid-frame
+  // (game.state flips to 'dying'), skip the rest so we don't touch a stale world.
+  activePlayers().forEach(p=>{
+    if(game.state!=='playing') return;
+    updatePlayerPhysics(dt, p, p.id===2 ? keys2 : keys1);
+  });
   updateEnemies(dt);
   updateBoss(dt);
   updateProjectiles(dt);
   updateItems(dt);
-  checkPlayerVsWorld();
+  activePlayers().forEach(p=>{
+    if(game.state!=='playing') return;
+    checkPlayerVsWorld(p);
+  });
   updateParticles(dt);
 
   for(const s of game.blocks) if(s.bump>0) s.bump -= dt;
 
-  const target = game.player.x + game.player.w/2 - CW/2;
-  game.camera.x = clamp(target, 0, Math.max(0, game.level.width - CW));
-  if(game.camera.shake>0) game.camera.shake -= dt;
+  if(game.state==='playing'){
+    const xs = activePlayers().map(p=>p.x+p.w/2);
+    const avg = xs.reduce((a,b)=>a+b,0)/xs.length;
+    game.camera.x = clamp(avg - CW/2, 0, Math.max(0, game.level.width - CW));
+    if(game.camera.shake>0) game.camera.shake -= dt;
+  }
 
   updateHUD();
 }
@@ -1238,8 +1323,7 @@ function drawGoal(){
   ctx.globalAlpha=1;
 }
 
-function drawPlayer(){
-  const p = game.player;
+function drawPlayer(p){
   if(game.state==='playing' && p.hurtTimer>0 && Math.floor(performance.now()/80)%2===0) return;
   const t = performance.now()/1000;
   ctx.save();
@@ -1247,9 +1331,10 @@ function drawPlayer(){
   ctx.scale(p.facing<0?-1:1, 1);
   ctx.translate(-p.w/2, -p.h/2);
 
-  let bodyColor = '#c9d6e3';
-  let accent = '#00e5ff';
-  if(p.power>=2) accent = '#ff2ec4';
+  // Player 2 is recolored magenta (matching the key art) so co-op is easy to read at a glance.
+  let bodyColor = p.id===2 ? '#e3c9dc' : '#c9d6e3';
+  let accent = p.id===2 ? '#ff2ec4' : '#00e5ff';
+  if(p.power>=2) accent = p.id===2 ? '#ffc24b' : '#ff2ec4';
   if(p.starTimer>0){ const hue=(t*260)%360; bodyColor=`hsl(${hue},80%,70%)`; accent=`hsl(${(hue+140)%360},100%,60%)`; }
 
   const runCycle = (!p.onGround) ? 0 : Math.sin(t*14)*3;
@@ -1311,7 +1396,7 @@ function render(){
   drawBoss();
   drawProjectiles();
   drawParticles();
-  if(game.player) drawPlayer();
+  activePlayers().forEach(drawPlayer);
   ctx.restore();
 }
 
@@ -1330,13 +1415,19 @@ function togglePause(){
   else if(game.state==='paused'){ game.state='playing'; hideAllScreens(); }
 }
 function confirmScreen(){
+  if(!document.getElementById('screen-playerselect').classList.contains('hidden')){
+    document.getElementById('btn-1p').click(); return;
+  }
   if(game.state==='start') document.getElementById('btn-start').click();
   else if(game.state==='levelcomplete') document.getElementById('btn-continue').click();
   else if(game.state==='gameover') document.getElementById('btn-retry').click();
   else if(game.state==='win') document.getElementById('btn-playagain').click();
 }
 
-document.getElementById('btn-start').addEventListener('click', ()=>{ ensureAudio(); startNewGame(); });
+document.getElementById('btn-start').addEventListener('click', ()=>{ ensureAudio(); showScreen('playerselect'); });
+document.getElementById('btn-1p').addEventListener('click', ()=>{ ensureAudio(); startNewGame('1p'); });
+document.getElementById('btn-2p').addEventListener('click', ()=>{ ensureAudio(); startNewGame('2p'); });
+document.getElementById('btn-playerselect-back').addEventListener('click', ()=>{ showScreen('start'); });
 document.getElementById('btn-resume').addEventListener('click', togglePause);
 document.getElementById('btn-restart-level').addEventListener('click', ()=>{ loadLevel(game.levelIndex); game.state='intro'; game.introTimer=1.2; hideAllScreens(); });
 document.getElementById('btn-quit').addEventListener('click', ()=>{ game.state='start'; showScreen('start'); });
