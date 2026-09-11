@@ -1,9 +1,13 @@
 # Sprite assets
 
-Drop matching `.svg` files here to replace the built-in vector-drawn
-look in `cosmo-leap.html`. The game checks for each file by name on
-load; anything missing just falls back to the current procedural
-drawing, so files can be added one at a time without breaking the game.
+Drop matching files here (`.png`/`.webp`/`.svg` all work — anything
+`Image()` can load) to replace the built-in procedurally-drawn look in
+`cosmo-leap.html`. The game checks for each file by name on load;
+anything missing just falls back to the current procedural drawing, so
+files can be replaced one at a time without breaking the game. The
+`p1-*`/`gem`/`coin`/etc. `.png` files currently here are AI-generated
+(Gemini Flash, image-referenced off the two robots in `start-bg.webp`
+below) — swap any of them out at will, same rule applies.
 
 ## `start-bg.webp`
 
@@ -17,32 +21,23 @@ repointing those rules — no other code changes needed. The in-game
 canvas itself is still drawn procedurally,
 untouched by this image.
 
-## Exporting from Illustrator
+## Character poses (`p1-*.png` / `p2-*.png`)
 
-- `Object → Expand Appearance` (and expand strokes) before exporting,
-  so nothing depends on live effects.
-- `File → Export → Export As → SVG`, styling **"Presentation
-  Attributes,"** fonts **"Convert to Outlines"** if any text is used.
-- No linked/embedded raster images inside the SVG — keep it pure
-  vector paths.
-- Crop each artboard tightly to the artwork (no big empty margins) —
-  the game scales each file to fit, so excess padding just makes the
-  art render smaller than intended.
-
-## Character poses (`viking-*.svg`)
-
-These are anchored by the **bottom-center** of the artboard — export
-each one standing on the same baseline, horizontally centered, so
-swapping between poses doesn't visibly shift the character:
+Player 1 and Player 2 (co-op) each have their own full pose set — P2 is
+just P1's design recolored, matching the magenta robot in `start-bg.webp`
+next to P1's cyan one. These are anchored by the **bottom-center** of
+the artboard — keep every pose standing on the same baseline,
+horizontally centered, so swapping between poses doesn't visibly shift
+the character:
 
 | File | Used when |
 |---|---|
-| `viking-idle.svg` | standing still |
-| `viking-walk1.svg` / `viking-walk2.svg` | alternate every ~140ms while moving (2-frame walk cycle; if only one exists, `viking-idle.svg` is used as the other frame automatically since the game just keeps checking `ready`) |
-| `viking-jump.svg` | airborne (jumping or falling) |
-| `viking-shoot.svg` | briefly, right after firing an arrow |
-| `viking-hurt.svg` | while the post-hit invincibility flash is active |
-| `viking-dead.svg` | during the death sequence |
+| `p1-idle.png` / `p2-idle.png` | standing still |
+| `p1-walk1.png` / `p1-walk2.png` (and `p2-*`) | alternate every ~140ms while moving (2-frame walk cycle; if only one exists, `*-idle.png` is used as the other frame automatically since the game just keeps checking `ready`) |
+| `p1-jump.png` / `p2-jump.png` | airborne (jumping or falling) |
+| `p1-shoot.png` / `p2-shoot.png` | briefly, right after firing an arrow |
+| `p1-hurt.png` / `p2-hurt.png` | while the post-hit invincibility flash is active |
+| `p1-dead.png` / `p2-dead.png` | during the death sequence |
 
 The character automatically mirrors horizontally when facing left, so
 export every pose facing **right**.
@@ -51,13 +46,26 @@ export every pose facing **right**.
 
 | File | Used for |
 |---|---|
-| `arrow.svg` | the fired projectile (auto-mirrors by travel direction; export pointing right) |
-| `bow-icon.svg` | the bow pickup that unlocks shooting |
-| `gem.svg` | collectible shards, and the shield pickup |
-| `coin.svg` | the double-jump pickup |
-| `chest.svg` | the glowing "core" block (item-dispensing) |
-| `crate.svg` | the plain breakable "ore" block |
-| `bomb.svg` | the rolling crawler enemy |
+| `arrow.png` | the fired projectile (auto-mirrors by travel direction; export pointing right) |
+| `bow-icon.png` | the bow pickup that unlocks shooting |
+| `gem.png` | collectible shards, and the shield pickup |
+| `coin.png` | the double-jump pickup |
+| `chest.png` | the glowing "core" block (item-dispensing) |
+| `crate.png` | the plain breakable "ore" block |
+| `bomb.png` | the rolling crawler enemy |
 
 These don't need a baseline anchor — they're centered and scaled to
 fit their in-game bounding box, so square-ish artboards work best.
+
+## Exporting a replacement from Illustrator (SVG)
+
+If you'd rather hand-author a replacement as a vector file instead of
+generating one: `Object → Expand Appearance` (and expand strokes)
+before exporting, `File → Export → Export As → SVG` styling
+**"Presentation Attributes"** (fonts **"Convert to Outlines"** if any
+text is used), no linked/embedded raster images — keep it pure vector
+paths, and crop the artboard tightly to the artwork (no big empty
+margins, since the game scales each file to fit). Then update the
+matching filename in the `SPRITES` list near the top of
+`cosmo-leap.html`'s `<script>` (the loader takes any path `Image()`
+can load, extension included).
