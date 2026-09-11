@@ -26,15 +26,17 @@ OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "assets", "audio")
 
 # name -> (prompt, duration_seconds, prompt_influence)
 SOUND_EFFECTS = {
-    "jump":     ("retro 8-bit arcade video game jump sound effect, short rising blip", 0.4, 0.6),
-    "airjump":  ("retro 8-bit arcade video game double-jump sound effect, higher pitched quick blip", 0.4, 0.6),
-    "stomp":    ("retro 8-bit arcade video game enemy stomp sound effect, short squashy thud blip", 0.35, 0.6),
-    "hit":      ("retro 8-bit arcade video game player takes damage sound effect, harsh descending blip", 0.4, 0.6),
-    "shard":    ("retro 8-bit arcade video game coin or shard collect chime, short sparkly high blip", 0.3, 0.6),
+    # duration_seconds must be >= 0.5 (the ElevenLabs API's own floor) --
+    # several of these were originally shorter and got rejected with a 400.
+    "jump":     ("retro 8-bit arcade video game jump sound effect, short rising blip", 0.5, 0.6),
+    "airjump":  ("retro 8-bit arcade video game double-jump sound effect, higher pitched quick blip", 0.5, 0.6),
+    "stomp":    ("retro 8-bit arcade video game enemy stomp sound effect, short squashy thud blip", 0.5, 0.6),
+    "hit":      ("retro 8-bit arcade video game player takes damage sound effect, harsh descending blip", 0.5, 0.6),
+    "shard":    ("retro 8-bit arcade video game coin or shard collect chime, short sparkly high blip", 0.5, 0.6),
     "power":    ("retro 8-bit arcade video game power-up collected sound effect, rising two-tone chime", 0.5, 0.6),
-    "bump":     ("retro 8-bit arcade video game block bump sound effect, short low thud blip", 0.25, 0.6),
-    "shoot":    ("retro 8-bit arcade video game laser or arrow shoot sound effect, quick pew blip", 0.3, 0.6),
-    "bossHit":  ("retro 8-bit arcade video game boss takes a hit, harsh low impact thud", 0.4, 0.6),
+    "bump":     ("retro 8-bit arcade video game block bump sound effect, short low thud blip", 0.5, 0.6),
+    "shoot":    ("retro 8-bit arcade video game laser or arrow shoot sound effect, quick pew blip", 0.5, 0.6),
+    "bossHit":  ("retro 8-bit arcade video game boss takes a hit, harsh low impact thud", 0.5, 0.6),
     "explode":  ("retro 8-bit arcade video game explosion sound effect, short noisy boom", 0.6, 0.6),
     "levelup":  ("retro 8-bit arcade video game level complete fanfare, short triumphant three-note jingle", 1.3, 0.5),
     "gameover": ("retro 8-bit arcade video game game over jingle, descending sad four-note melody", 1.6, 0.5),
