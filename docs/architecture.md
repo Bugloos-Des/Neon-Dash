@@ -190,6 +190,38 @@ Per-level **themes** (`THEMES` object: sky gradient + accent colors) are
 looked up once per level and referenced throughout drawing, so reskinning
 a level's palette is a one-line change to its `theme` field.
 
+## 10. Leaderboard (the one optional network call)
+
+Everything above is offline and self-contained. The leaderboard is the
+single exception: if `SUPABASE_URL` and `SUPABASE_ANON_KEY` are filled in
+at the top of the script, a finished run can be posted to a Supabase table
+and the global top 10 read back.
+
+It talks to Supabase's REST endpoint with plain `fetch` instead of the
+`supabase-js` SDK — two small functions (`lbFetchTop`, `lbPostScore`) are
+all a PostgREST table needs, and that keeps the promise the rest of this
+document makes: one file, no build step, no external libraries.
+
+Two patterns are worth calling out:
+
+- **It degrades to nothing.** `LB_ON` is false whenever either credential
+  is blank, and every entry point checks it, so an unconfigured build is
+  byte-for-byte the same game with the button hidden. Network failures are
+  caught and shown as "Leaderboard offline." — a dead backend can never
+  block play.
+- **One panel, re-parented.** `#lb-panel` is a single block of markup that
+  `lbMount()` moves into whichever screen currently needs it (game over,
+  win, or the dedicated TOP PILOTS screen) rather than duplicating the
+  list markup three times.
+
+The keyboard handler grew a guard for this: `isTyping()` makes the game
+ignore input while the callsign field has focus, since `A`/`D`/`X` are
+movement keys and would otherwise drive the player while the name is
+being typed.
+
+Table schema, RLS policies, and what is and isn't safe to put in the file:
+`docs/leaderboard.md`.
+
 ## Extending this project (suggested exercises)
 
 - **New enemy type**: add a factory (`makeX`), a branch in `updateEnemies`
