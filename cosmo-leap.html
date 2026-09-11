@@ -77,16 +77,39 @@
   }
   .iconbtn{
     pointer-events:auto;
-    width:22px;height:22px;
-    background:rgba(12,10,26,0.7);
+    width:24px;height:24px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.18), rgba(12,10,26,0.85) 55%);
     border:1px solid var(--amber-dim);
     color:var(--amber);
-    border-radius:4px;
+    border-radius:50%;
     font-size:11px;
     display:flex; align-items:center; justify-content:center;
     cursor:pointer;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.35), 0 2px 3px rgba(0,0,0,0.5);
   }
-  .iconbtn:active{ background:rgba(255,179,71,0.25); }
+  .iconbtn:active{ background:rgba(255,179,71,0.25); transform:translateY(1px); }
+
+  /* ---------- Glossy HUD chips ---------- */
+  .chip{
+    pointer-events:none;
+    display:flex; align-items:center; gap:4px;
+    padding:3px 7px 3px 3px;
+    border-radius:999px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(0,0,0,0.28));
+    box-shadow: inset 0 1px 1px rgba(255,255,255,0.25), inset 0 -2px 3px rgba(0,0,0,0.35), 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .chip-icon{
+    width:15px; height:15px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; line-height:1;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.6), inset 0 -2px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.5);
+    flex:none;
+  }
+  .chip-icon.gold{ background:radial-gradient(circle at 35% 30%, #ffe9b0, #ffb347 55%, #b3730f 100%); }
+  .chip-icon.gem{ background:radial-gradient(circle at 35% 30%, #d6fff2, #3dffc0 55%, #0a8f68 100%); border-radius:3px; transform:rotate(45deg); }
+  .chip-icon.gem span{ transform:rotate(-45deg); display:block; }
+  .chip-icon.ruby{ background:radial-gradient(circle at 35% 30%, #ffd6de, #ff6b81 55%, #9c1f30 100%); }
+  .chip-icon.amethyst{ background:radial-gradient(circle at 35% 30%, #ecdcff, #a76bff 55%, #5c2ba3 100%); }
 
   .screen{
     position:absolute; inset:0;
@@ -129,26 +152,29 @@
     font-family:'Press Start 2P', monospace;
     font-size:clamp(9px,2.2vw,12px);
     color:#1a1204;
-    background: linear-gradient(180deg, var(--amber), #c97f16);
-    border:none;
-    padding:12px 20px;
-    border-radius:5px;
+    background: linear-gradient(180deg, #ffe9b0, var(--amber) 40%, #c97f16);
+    border:2px solid #7a4d0d;
+    padding:12px 22px;
+    border-radius:999px;
     cursor:pointer;
-    box-shadow: 0 0 16px rgba(255,179,71,0.6);
+    box-shadow: inset 0 2px 2px rgba(255,255,255,0.6), inset 0 -4px 6px rgba(0,0,0,0.25), 0 3px 0 #7a4d0d, 0 0 16px rgba(255,179,71,0.5);
     letter-spacing:1px;
     pointer-events:auto;
   }
-  .btn:active{ transform:translateY(1px); }
+  .btn:active{ transform:translateY(2px); box-shadow: inset 0 2px 2px rgba(255,255,255,0.6), inset 0 -4px 6px rgba(0,0,0,0.25), 0 1px 0 #7a4d0d; }
   .btn.alt{
-    background: linear-gradient(180deg, var(--violet), #6c2fc9);
-    box-shadow: 0 0 16px rgba(167,107,255,0.6);
+    background: linear-gradient(180deg, #ecdcff, var(--violet) 40%, #6c2fc9);
+    border-color:#432066;
+    box-shadow: inset 0 2px 2px rgba(255,255,255,0.6), inset 0 -4px 6px rgba(0,0,0,0.25), 0 3px 0 #432066, 0 0 16px rgba(167,107,255,0.5);
   }
+  .btn.alt:active{ box-shadow: inset 0 2px 2px rgba(255,255,255,0.6), inset 0 -4px 6px rgba(0,0,0,0.25), 0 1px 0 #432066; }
   .btn.ghost{
     background:transparent;
     color:var(--text-dim);
     border:1px solid var(--text-dim);
     box-shadow:none;
   }
+  .btn.ghost:active{ box-shadow:none; }
   .btnrow{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
   .statline{ font-size:clamp(13px,2.8vw,18px); color:var(--text); margin:2px 0; }
   .statline b{ color:var(--teal); }
@@ -205,10 +231,12 @@
         <div class="lvl-name" id="hud-lvlname">NEBULA FIELDS</div>
       </div>
       <div class="hud-block hud-right">
-        <div class="row"><span class="lbl">SCORE</span><span class="val-score" id="hud-score">000000</span></div>
-        <div class="row"><span class="lbl">★</span><span class="val-shard" id="hud-shards">00</span>
-          <span class="lbl">×</span><span class="val-lives" id="hud-lives">3</span>
-          <span class="lbl">⏱</span><span class="val-time" id="hud-time">150</span></div>
+        <div class="row"><span class="chip"><span class="chip-icon gold">★</span><span class="val-score" id="hud-score">000000</span></span></div>
+        <div class="row">
+          <span class="chip"><span class="chip-icon gem"><span>◆</span></span><span class="val-shard" id="hud-shards">00</span></span>
+          <span class="chip"><span class="chip-icon ruby">💀</span><span class="val-lives" id="hud-lives">3</span></span>
+          <span class="chip"><span class="chip-icon amethyst">⏳</span><span class="val-time" id="hud-time">150</span></span>
+        </div>
       </div>
     </div>
 
@@ -1055,27 +1083,54 @@ function drawSolids(){
   }
 }
 
+// Glossy treasure-chest block: wood-brown base, gold trim bands, and a
+// pulsing gold lock while unused; dulls to a spent, opened look once used.
+function drawChestBlock(b, y){
+  const w=b.w, h=b.h, x=b.x;
+  const lidH = h*0.4;
+  const wood = ctx.createLinearGradient(x,y,x,y+h);
+  if(b.used){ wood.addColorStop(0,'#3a2a20'); wood.addColorStop(1,'#241812'); }
+  else { wood.addColorStop(0,'#a5642c'); wood.addColorStop(1,'#6b3d18'); }
+  ctx.fillStyle = wood;
+  ctx.fillRect(x+1,y+1,w-2,h-2);
+  // gold trim bands
+  ctx.fillStyle = b.used ? '#5a4a2a' : '#ffcf6b';
+  ctx.fillRect(x+1,y+lidH-2,w-2,3);
+  ctx.fillRect(x+2,y+2,3,h-4); ctx.fillRect(x+w-5,y+2,3,h-4);
+  // lid highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.fillRect(x+2,y+2,w-4,3);
+  if(!b.used){
+    const pulse = 0.5+0.5*Math.sin(performance.now()/220);
+    ctx.save();
+    ctx.translate(x+w/2, y+lidH+ (h-lidH)/2);
+    const g = ctx.createRadialGradient(0,0,0.5,0,0,5);
+    g.addColorStop(0,'#fff3d0'); g.addColorStop(1,'#c98a1c');
+    ctx.globalAlpha = 0.7+0.3*pulse;
+    ctx.beginPath(); ctx.arc(0,0,4,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.restore();
+  }
+}
+// Glossy stone crate block: cool grey slab with a lighter bevel and
+// crossed hammer-dent planks, in the style of a chunky cartoon prop.
+function drawCrateBlock(b, y){
+  const w=b.w, h=b.h, x=b.x;
+  const stone = ctx.createLinearGradient(x,y,x,y+h);
+  stone.addColorStop(0,'#8a7d92'); stone.addColorStop(1,'#4a3f52');
+  ctx.fillStyle = stone; ctx.fillRect(x+1,y+1,w-2,h-2);
+  ctx.strokeStyle = '#2c2432'; ctx.lineWidth=1.5; ctx.strokeRect(x+1.5,y+1.5,w-3,h-3);
+  ctx.fillStyle = 'rgba(255,255,255,0.16)';
+  ctx.fillRect(x+3,y+3,w-6,3);
+  ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(x+5,y+h-5); ctx.lineTo(x+w-5,y+5); ctx.stroke();
+}
 function drawBlocks(){
   for(const b of game.blocks){
     const off = b.bump>0 ? -Math.sin((0.15-b.bump)/0.15*Math.PI)*4 : 0;
     const y = b.y+off;
-    if(b.kind==='core' && !b.used){
-      ctx.fillStyle = '#2a1a44'; ctx.fillRect(b.x,y,b.w,b.h);
-      ctx.strokeStyle = '#ffb347'; ctx.lineWidth=2; ctx.strokeRect(b.x+2,y+2,b.w-4,b.h-4);
-      ctx.fillStyle = '#ffb347';
-      const pulse = 0.5+0.5*Math.sin(performance.now()/200);
-      ctx.globalAlpha = 0.5+0.5*pulse;
-      ctx.fillRect(b.x+b.w/2-3, y+b.h/2-3, 6, 6);
-      ctx.globalAlpha = 1;
-    } else if(b.kind==='core' && b.used){
-      ctx.fillStyle = '#140c1e'; ctx.fillRect(b.x,y,b.w,b.h);
-      ctx.strokeStyle = '#33254a'; ctx.lineWidth=2; ctx.strokeRect(b.x+2,y+2,b.w-4,b.h-4);
-    } else {
-      ctx.fillStyle = '#3a2a3c'; ctx.fillRect(b.x,y,b.w,b.h);
-      ctx.strokeStyle = '#7a5a74'; ctx.lineWidth=2; ctx.strokeRect(b.x+2,y+2,b.w-4,b.h-4);
-      ctx.fillStyle='#5a4256';
-      ctx.fillRect(b.x+3,y+3,b.w-6,4); ctx.fillRect(b.x+3,y+b.h-9,b.w-6,4);
-    }
+    if(b.kind==='core') drawChestBlock(b, y);
+    else drawCrateBlock(b, y);
   }
 }
 
@@ -1102,6 +1157,25 @@ function drawVents(){
   }
 }
 
+// Glossy gem: a diamond silhouette with a radial highlight and a bright
+// sparkle facet, in the vein of a cartoon jewel icon — drawn as vector
+// shapes so it stays crisp at any zoom, no image asset needed.
+function drawGem(size, lightColor, midColor, darkColor){
+  const r = size;
+  ctx.beginPath();
+  ctx.moveTo(0,-r); ctx.lineTo(r*0.9,-r*0.15); ctx.lineTo(0,r); ctx.lineTo(-r*0.9,-r*0.15);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(-r,-r,r,r);
+  g.addColorStop(0, lightColor); g.addColorStop(0.5, midColor); g.addColorStop(1, darkColor);
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.strokeStyle = darkColor; ctx.lineWidth=0.75; ctx.stroke();
+  // facet line + sparkle highlight
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth=0.75;
+  ctx.beginPath(); ctx.moveTo(-r*0.9,-r*0.15); ctx.lineTo(r*0.9,-r*0.15); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.beginPath(); ctx.ellipse(-r*0.32,-r*0.4,r*0.22,r*0.12,-0.5,0,Math.PI*2); ctx.fill();
+}
 function drawShards(){
   const t = performance.now()/1000;
   for(const s of game.shards){
@@ -1109,15 +1183,46 @@ function drawShards(){
     const bob = Math.sin(t*3 + s.x)*3;
     ctx.save();
     ctx.translate(s.x, s.y+bob);
-    ctx.rotate(t*2 + s.x);
-    ctx.fillStyle = '#3dffc0';
-    ctx.beginPath();
-    ctx.moveTo(0,-5); ctx.lineTo(5,0); ctx.lineTo(0,5); ctx.lineTo(-5,0); ctx.closePath();
-    ctx.fill();
+    ctx.rotate(Math.sin(t*1.5 + s.x)*0.35);
+    drawGem(5.5, '#e8fff8', '#3dffc0', '#0a8f68');
     ctx.restore();
   }
 }
 
+// Glossy round token (star-coin style): dark rim, radial gold gradient
+// body, a bright specular highlight, and an embossed glyph on top.
+function drawCoinToken(cx, cy, r, glyph, ringColor, faceLight, faceDark){
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.fillStyle = ringColor; ctx.fill();
+  const g = ctx.createRadialGradient(cx-r*0.3,cy-r*0.35,r*0.1, cx,cy,r*0.95);
+  g.addColorStop(0, faceLight); g.addColorStop(1, faceDark);
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.8,0,Math.PI*2);
+  ctx.fillStyle = g; ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.beginPath(); ctx.ellipse(cx-r*0.28,cy-r*0.32,r*0.28,r*0.14,-0.6,0,Math.PI*2); ctx.fill();
+  if(glyph){
+    ctx.fillStyle = ringColor; ctx.globalAlpha=0.85;
+    ctx.font = `${Math.round(r*1.1)}px 'Press Start 2P'`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(glyph, cx, cy+1);
+    ctx.globalAlpha=1;
+  }
+}
+// Small glossy dagger icon (blade + crossguard + hilt).
+function drawDaggerIcon(cx, cy, s){
+  ctx.save(); ctx.translate(cx,cy);
+  const blade = ctx.createLinearGradient(-s*0.15,-s,s*0.15,s*0.1);
+  blade.addColorStop(0,'#f2f4ff'); blade.addColorStop(0.5,'#b9c3e6'); blade.addColorStop(1,'#5c6690');
+  ctx.fillStyle = blade;
+  ctx.beginPath();
+  ctx.moveTo(0,-s); ctx.lineTo(s*0.22,-s*0.1); ctx.lineTo(0,s*0.15); ctx.lineTo(-s*0.22,-s*0.1);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#ffb347';
+  ctx.fillRect(-s*0.32,-s*0.14,s*0.64,s*0.14);
+  ctx.fillStyle = '#7a4d0d';
+  ctx.fillRect(-s*0.08,s*0.0,s*0.16,s*0.45);
+  ctx.restore();
+}
 function drawItems(){
   const t = performance.now()/1000;
   for(const it of game.items){
@@ -1125,39 +1230,53 @@ function drawItems(){
     const bob = it.spawning ? 0 : Math.sin(t*3+it.x)*2;
     const x = it.x, y = it.y+bob;
     if(it.type==='boost'){
-      ctx.fillStyle = '#3dffc0';
-      ctx.fillRect(x,y,18,18);
-      ctx.fillStyle = '#0a2a24';
-      ctx.fillRect(x+4,y+4,4,4); ctx.fillRect(x+10,y+4,4,4);
+      // gold star-coin token: grants the double-jump boost
+      drawCoinToken(x+9, y+9, 9, '★', '#8a5a10', '#fff3d0', '#ffb347');
     } else if(it.type==='nova'){
-      ctx.fillStyle = '#a76bff';
-      ctx.beginPath(); ctx.arc(x+9,y+9,9,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.globalAlpha=0.6;
-      ctx.beginPath(); ctx.arc(x+9,y+9,3,0,Math.PI*2); ctx.fill();
-      ctx.globalAlpha=1;
+      // dagger token: grants the ranged flare shot
+      ctx.save(); ctx.translate(0, Math.sin(t*4)*1.5);
+      drawDaggerIcon(x+9, y+9, 8);
+      ctx.restore();
     } else if(it.type==='shield'){
-      const hue = (t*180)%360;
-      ctx.fillStyle = `hsl(${hue},100%,60%)`;
+      // spinning gem: grants temporary invincibility
       ctx.save(); ctx.translate(x+9,y+9); ctx.rotate(t*3);
-      ctx.beginPath();
-      for(let i=0;i<5;i++){ const a=i*(Math.PI*2/5)-Math.PI/2; const r = i%2===0?10:4; ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r); }
-      ctx.closePath(); ctx.fill(); ctx.restore();
+      drawGem(9, '#fff0f5', '#ff6b81', '#8a1c30');
+      ctx.restore();
     }
   }
 }
 
+// Rolling bomb-critter: a glossy round body with a rim-light, a lit fuse
+// spark, and two cartoon eyes -- rolls back and forth on patrol.
 function drawEnemyCrawler(e){
   const sq = e.alive ? 1 : Math.max(0.15, e.squish/0.22);
+  const t = performance.now()/1000;
   ctx.save();
   ctx.translate(e.x+e.w/2, e.y+e.h);
   ctx.scale(1, sq);
-  ctx.translate(-e.w/2, -e.h);
-  ctx.fillStyle = '#3a2a55';
-  ctx.fillRect(0,4,e.w,e.h-4);
-  ctx.fillStyle = '#ff6b81';
-  ctx.fillRect(e.w/2-7,6,6,6); ctx.fillRect(e.w/2+1,6,6,6);
-  ctx.fillStyle = '#160e22';
-  ctx.fillRect(2,e.h-4,5,4); ctx.fillRect(e.w-7,e.h-4,5,4);
+  ctx.translate(0, -e.h/2);
+  ctx.rotate(e.alive ? (e.x*0.05) : 0);
+  const r = e.w/2-1;
+  const g = ctx.createRadialGradient(-r*0.3,-r*0.35,r*0.1, 0,0,r);
+  g.addColorStop(0,'#5c4a78'); g.addColorStop(0.6,'#2a1a44'); g.addColorStop(1,'#140c22');
+  ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath(); ctx.ellipse(-r*0.35,-r*0.4,r*0.32,r*0.16,-0.6,0,Math.PI*2); ctx.fill();
+  // fuse
+  ctx.strokeStyle = '#7a5a34'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(0,-r); ctx.quadraticCurveTo(r*0.3,-r*1.5,r*0.1,-r*1.8); ctx.stroke();
+  const flick = 0.6+0.4*Math.sin(t*20);
+  ctx.fillStyle = `rgba(255,${140+Math.floor(80*flick)},60,${flick})`;
+  ctx.beginPath(); ctx.arc(r*0.1,-r*1.8,2.2,0,Math.PI*2); ctx.fill();
+  // eyes
+  if(e.alive){
+    ctx.fillStyle = '#ff6b81';
+    ctx.beginPath(); ctx.arc(-r*0.3,-r*0.1,2.2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(r*0.3,-r*0.1,2.2,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.strokeStyle = '#160e22'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(-r*0.4,-r*0.2); ctx.lineTo(-r*0.15,0.2); ctx.moveTo(-r*0.15,-r*0.2); ctx.lineTo(-r*0.4,0.2); ctx.stroke();
+  }
   ctx.restore();
 }
 function drawEnemyFloater(e){
@@ -1166,11 +1285,14 @@ function drawEnemyFloater(e){
   ctx.translate(e.x+e.w/2, e.y+e.h/2);
   const sq = e.alive?1:Math.max(0.15,e.squish/0.22);
   ctx.scale(1,sq);
-  ctx.fillStyle = '#2a1a44';
-  ctx.beginPath(); ctx.ellipse(0,0,e.w/2,e.h/2,0,0,Math.PI*2); ctx.fill();
+  const g = ctx.createRadialGradient(-e.w*0.15,-e.h*0.2,1, 0,0,e.w/2);
+  g.addColorStop(0,'#5c4a78'); g.addColorStop(1,'#2a1a44');
+  ctx.beginPath(); ctx.ellipse(0,0,e.w/2,e.h/2,0,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.beginPath(); ctx.ellipse(-e.w*0.18,-e.h*0.22,e.w*0.22,e.h*0.12,-0.5,0,Math.PI*2); ctx.fill();
   ctx.fillStyle = '#a76bff';
   ctx.globalAlpha = 0.6+0.4*Math.sin(t*10);
-  ctx.fillRect(-4,-3,8,6);
+  ctx.beginPath(); ctx.ellipse(0,0,4,3,0,0,Math.PI*2); ctx.fill();
   ctx.globalAlpha=1;
   ctx.restore();
 }
@@ -1235,11 +1357,21 @@ function drawGoal(){
   ctx.fillStyle = '#140c22';
   ctx.fillRect(g.x-2, g.y-90, 4, 90);
   const pulse = 0.6+0.4*Math.sin(t*4);
-  ctx.fillStyle = game.goalReached ? '#3dffc0' : `rgba(255,179,71,${pulse})`;
-  ctx.beginPath(); ctx.arc(g.x, g.y-96, 10, 0, Math.PI*2); ctx.fill();
-  ctx.globalAlpha=0.3;
-  ctx.beginPath(); ctx.arc(g.x, g.y-96, 18, 0, Math.PI*2); ctx.fill();
+  const cx=g.x, cy=g.y-96;
+  ctx.globalAlpha=0.28;
+  ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI*2);
+  ctx.fillStyle = game.goalReached ? '#3dffc0' : '#ffb347';
+  ctx.fill();
   ctx.globalAlpha=1;
+  // glossy trophy-orb beacon
+  const light = game.goalReached ? '#e8fff8' : '#fff3d0';
+  const mid = game.goalReached ? '#3dffc0' : '#ffb347';
+  const dark = game.goalReached ? '#0a8f68' : '#8a5a10';
+  const gr = ctx.createRadialGradient(cx-3,cy-3,1, cx,cy,10*(0.9+0.1*pulse));
+  gr.addColorStop(0,light); gr.addColorStop(0.6,mid); gr.addColorStop(1,dark);
+  ctx.beginPath(); ctx.arc(cx, cy, 10*(0.9+0.1*pulse), 0, Math.PI*2); ctx.fillStyle=gr; ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.beginPath(); ctx.ellipse(cx-3,cy-4,3,1.6,-0.6,0,Math.PI*2); ctx.fill();
 }
 
 function drawPlayer(){
